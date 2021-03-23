@@ -11,8 +11,13 @@ import {
 import { ConfigService } from '@nestjs/config';
 
 import { User } from '../users/user.entity';
+import { LoginUserDto } from '../users/dto/login-user.dto';
 import { RegisterUserDto } from '../users/dto/register-user.dto';
-import { FastestValidationPipe, registerSchema } from '../utils/validation';
+import {
+  FastestValidationPipe,
+  loginSchema,
+  registerSchema,
+} from '../utils/validation';
 import { COOKIE_OPTIONS } from '../utils/config';
 import { EnvironmentVariables } from '../utils/types';
 
@@ -43,5 +48,27 @@ export class AuthController {
     return res
       .cookie(cookieName, token, COOKIE_OPTIONS)
       .send({ id: user.id, email, name });
+  }
+
+  @Post('login')
+  @UsePipes(new FastestValidationPipe(loginSchema))
+  async login(@Body() loginUserDto: LoginUserDto, @Res() res: Response) {
+    const { email, password } = loginUserDto;
+
+    let user = await User.findOne({ where: { email } });
+    if (!user) throw new BadRequestException('Invalid email or password');
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) throw new BadRequestException('Invalid email or password');
+
+    const secret = this.configService.get<string>('APP_ACCESS_SECRET')!;
+    const cookieName = this.configService.get<string>(
+      'ACCESS_TOKEN_COOKIE_NAME',
+    )!;
+    const token = user.generateAccessToken(secret);
+
+    return res
+      .cookie(cookieName, token, COOKIE_OPTIONS)
+      .send({ id: user.id, email, name: user.name });
   }
 }
