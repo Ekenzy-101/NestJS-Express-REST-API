@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
@@ -55,5 +56,24 @@ export class PostsController {
 
     const result = await PostEntity.edit(id, postDto);
     return result.raw[0];
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  async deletePost(
+    @Param(new FastestValidationPipe(idSchema)) { id }: { id: string },
+    @Req() req: Request,
+  ) {
+    let post = await PostEntity.findOne(id);
+    if (!post) throw new NotFoundException('Post not found');
+
+    const user = (req.user as unknown) as User;
+    if (post.user.id !== user.id)
+      throw new UnauthorizedException(
+        'You are not authorized to update this post',
+      );
+
+    await PostEntity.delete(id);
+    return 'Success';
   }
 }
