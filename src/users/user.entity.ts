@@ -24,11 +24,11 @@ export class User extends BaseEntity {
   @Column({ length: 50 })
   name: string;
 
-  @Column('text')
+  @Column('text', { select: false })
   password: string;
 
   @OneToMany(() => Post, (post) => post.user)
-  posts: Post;
+  posts: Post[];
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;

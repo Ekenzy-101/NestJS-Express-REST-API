@@ -55,7 +55,10 @@ export class AuthController {
   async login(@Body() loginUserDto: LoginUserDto, @Res() res: Response) {
     const { email, password } = loginUserDto;
 
-    let user = await User.findOne({ where: { email } });
+    let user = await User.findOne({
+      where: { email },
+      select: ['password', 'id', 'name'],
+    });
     if (!user) throw new BadRequestException('Invalid email or password');
 
     const isValid = await bcrypt.compare(password, user.password);

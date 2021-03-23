@@ -25,6 +25,13 @@ export class FastestValidationPipe implements PipeTransform {
   }
 }
 
+export const idSchema = {
+  id: {
+    type: 'uuid',
+    messages: { uuid: 'Id is not a valid uuid' },
+  },
+};
+
 export const loginSchema = {
   email: {
     type: 'email',
