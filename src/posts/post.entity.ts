@@ -3,17 +3,20 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+
+import { User } from '../users/user.entity';
 
 export enum PostCategory {
   Education = 'Education',
   Sport = 'Sport',
   Politics = 'Politics',
 }
-
 @Entity({ name: 'posts' })
 export class Post extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -36,6 +39,13 @@ export class Post extends BaseEntity {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @ManyToOne(() => User, (user) => user.posts, {
+    eager: true,
+    cascade: ['remove'],
+  })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   static edit(id: string, values: QueryDeepPartialEntity<Post>) {
     return this.createQueryBuilder()
