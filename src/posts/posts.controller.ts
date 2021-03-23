@@ -31,6 +31,25 @@ export class PostsController {
     return await PostEntity.find({ order: { updatedAt: 'DESC' } });
   }
 
+  @Get('me')
+  @UseGuards(AuthGuard)
+  async getUserPosts(@Req() req: Request) {
+    return await PostEntity.find({
+      order: { updatedAt: 'DESC' },
+      where: { user: req.user },
+    });
+  }
+
+  @Get(':id')
+  async getPost(
+    @Param(new FastestValidationPipe(idSchema)) { id }: { id: string },
+  ) {
+    const post = await PostEntity.findOne(id);
+    if (!post) throw new NotFoundException('Post not found');
+
+    return post;
+  }
+
   @Post()
   @UseGuards(AuthGuard)
   @UsePipes(new FastestValidationPipe(postSchema))
