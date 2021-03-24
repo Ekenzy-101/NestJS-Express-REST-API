@@ -6,6 +6,7 @@ import {
   Controller,
   Post,
   Res,
+  UseGuards,
   UsePipes,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -20,6 +21,7 @@ import {
 } from '../utils/validation';
 import { COOKIE_OPTIONS } from '../utils/config';
 import { EnvironmentVariables } from '../utils/types';
+import { AuthGuard } from './auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -73,5 +75,18 @@ export class AuthController {
     return res
       .cookie(cookieName, token, COOKIE_OPTIONS)
       .send({ id: user.id, email, name: user.name });
+  }
+
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  @UsePipes(new FastestValidationPipe(loginSchema))
+  async logout(@Res() res: Response) {
+    const cookieName = this.configService.get<string>(
+      'ACCESS_TOKEN_COOKIE_NAME',
+    )!;
+
+    return res
+      .clearCookie(cookieName, COOKIE_OPTIONS)
+      .send('Logged out successfully');
   }
 }
