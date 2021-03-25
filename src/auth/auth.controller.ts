@@ -73,6 +73,7 @@ export class AuthController {
     const token = user.generateAccessToken(secret);
 
     return res
+      .status(200)
       .cookie(cookieName, token, COOKIE_OPTIONS)
       .send({ id: user.id, email, name: user.name });
   }
@@ -86,6 +87,7 @@ export class AuthController {
     )!;
 
     return res
+      .status(200)
       .clearCookie(cookieName, COOKIE_OPTIONS)
       .send('Logged out successfully');
   }
