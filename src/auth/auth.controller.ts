@@ -27,6 +27,21 @@ import { AuthGuard } from './auth.guard';
 export class AuthController {
   constructor(private configService: ConfigService<EnvironmentVariables>) {}
 
+  cookieResponse(res: Response, user: User, status: number) {
+    const secret = this.configService.get<string>('APP_ACCESS_SECRET')!;
+    const cookieName = this.configService.get<string>(
+      'ACCESS_TOKEN_COOKIE_NAME',
+    )!;
+
+    const token = user.generateAccessToken(secret);
+    const { id, name, email } = user;
+
+    return res
+      .status(status)
+      .cookie(cookieName, token, COOKIE_OPTIONS)
+      .send({ id, email, name });
+  }
+
   @Post('register')
   @UsePipes(new FastestValidationPipe(registerSchema))
   async register(
@@ -41,15 +56,7 @@ export class AuthController {
     const hashedPassword = await bcrypt.hash(password, 12);
     user = await User.create({ name, email, password: hashedPassword }).save();
 
-    const secret = this.configService.get<string>('APP_ACCESS_SECRET')!;
-    const cookieName = this.configService.get<string>(
-      'ACCESS_TOKEN_COOKIE_NAME',
-    )!;
-    const token = user.generateAccessToken(secret);
-
-    return res
-      .cookie(cookieName, token, COOKIE_OPTIONS)
-      .send({ id: user.id, email, name });
+    return this.cookieResponse(res, user, 201);
   }
 
   @Post('login')
@@ -59,23 +66,14 @@ export class AuthController {
 
     let user = await User.findOne({
       where: { email },
-      select: ['password', 'id', 'name'],
+      select: ['password', 'id', 'name', 'email'],
     });
     if (!user) throw new BadRequestException('Invalid email or password');
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) throw new BadRequestException('Invalid email or password');
 
-    const secret = this.configService.get<string>('APP_ACCESS_SECRET')!;
-    const cookieName = this.configService.get<string>(
-      'ACCESS_TOKEN_COOKIE_NAME',
-    )!;
-    const token = user.generateAccessToken(secret);
-
-    return res
-      .status(200)
-      .cookie(cookieName, token, COOKIE_OPTIONS)
-      .send({ id: user.id, email, name: user.name });
+    return this.cookieResponse(res, user, 200);
   }
 
   @Post('logout')
