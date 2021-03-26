@@ -2,13 +2,13 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   NotFoundException,
   Param,
   Post,
   Put,
   Req,
-  UnauthorizedException,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
@@ -69,7 +69,7 @@ export class PostsController {
 
     const user = (req.user as unknown) as User;
     if (post.user.id !== user.id)
-      throw new UnauthorizedException(
+      throw new ForbiddenException(
         'You are not authorized to update this post',
       );
 
@@ -88,7 +88,7 @@ export class PostsController {
 
     const user = (req.user as unknown) as User;
     if (post.user.id !== user.id)
-      throw new UnauthorizedException(
+      throw new ForbiddenException(
         'You are not authorized to update this post',
       );
 
